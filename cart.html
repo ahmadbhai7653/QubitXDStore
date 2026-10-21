@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qubit XD | Cart</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== CORE VARIABLES & RESET ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+img{max-width:100%;display:block}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;outline:none}
+input,select{font-family:inherit;outline:none}
+::selection{background:rgba(192,132,252,.3);color:#fff}
+
+:root{
+  --bg:#030305; 
+  --card-bg:rgba(255,255,255,.015);
+  --card-border:rgba(255,255,255,.06);
+  --text:#ffffff;
+  --dim:#9ca3af;
+  --mute:#4b5563;
+  
+  --acc:#C084FC;
+  --acc2:#F0ABFC;
+  --acc-rgb:192,132,252;
+  --acc2-rgb:240,171,252;
+  
+  --fd:'Space Grotesk',sans-serif;
+  --fb:'Inter',sans-serif;
+  --fu:'Plus Jakarta Sans',sans-serif;
+  --fl:'Orbitron',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+  
+  --max:1240px;
+  --ease:cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;line-height:1.7;cursor:none}
+@media(hover:none){body{cursor:auto}.cursor-dot,.cursor-ring{display:none!important}}
+
+body.popup-open { overflow: hidden; }
+body.popup-open .cursor-dot, body.popup-open .cursor-ring { z-index: 1000001 !important; display: block !important; }
+
+/* ===== CLEAN CURSOR ===== */
+.cursor-dot{position:fixed;width:4px;height:4px;background:var(--acc);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);box-shadow:0 0 12px var(--acc), 0 0 24px var(--acc)}
+.cursor-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(var(--acc-rgb),.4);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:width .2s var(--ease), height .2s var(--ease), border-color .2s, background .2s}
+.cursor-ring.hovered{width:50px;height:50px;border-color:var(--acc);background:rgba(var(--acc-rgb),.05);backdrop-filter:blur(1px)}
+
+/* ===== ENTRANCE LOADER ===== */
+#loader{position:fixed;inset:0;z-index:999999;background:#030305;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s var(--ease),visibility 0.6s}
+#loader.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.loader-brand{position:relative;width:90px;height:90px;display:flex;align-items:center;justify-content:center;margin-bottom:2rem}
+.loader-brand::before,.loader-brand::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid transparent}
+.loader-brand::before{border-top-color:var(--acc);border-right-color:var(--acc);animation:spin 1s linear infinite}
+.loader-brand::after{inset:5px;border-bottom-color:var(--acc2);border-left-color:var(--acc2);animation:spin 1.5s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-brand img{width:45px;height:45px;border-radius:8px;z-index:2;box-shadow:0 0 20px rgba(var(--acc-rgb),0.5)}
+.loader-title{font-family:var(--fl);font-weight:700;font-size:1.6rem;letter-spacing:.3em;text-transform:uppercase;color:#fff;margin-bottom:.5rem;text-shadow:0 0 15px rgba(var(--acc-rgb),0.6)}
+.loader-bar{width:200px;height:2px;background:rgba(255,255,255,.05);position:relative;overflow:hidden;border-radius:2px}
+.loader-bar::after{content:'';position:absolute;inset:0;width:50%;background:linear-gradient(90deg,transparent,var(--acc),transparent);animation:loadSweep 1s infinite}
+@keyframes loadSweep{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+
+/* ===== BACKGROUND ===== */
+.bg-layer{position:fixed;inset:0;pointer-events:none;z-index:-4}
+.bg-gradient{position:absolute;inset:-20%;background:radial-gradient(circle at 15% 30%, rgba(var(--acc-rgb),0.06) 0%, transparent 50%), radial-gradient(circle at 85% 70%, rgba(var(--acc2-rgb),0.06) 0%, transparent 50%);filter:blur(60px);animation:drift 20s ease-in-out infinite alternate}
+@keyframes drift{100%{transform:rotate(5deg) scale(1.1)}}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,#000 30%,transparent 80%)}
+#particleCanvas{position:fixed;inset:0;z-index:-3;pointer-events:none}
+#scrollProgress{position:fixed;top:0;left:0;height:2px;z-index:10001;width:0;background:var(--acc);transition:width .1s linear;box-shadow:0 0 10px var(--acc)}
+
+/* ===== SLEEK NAVBAR ===== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:1.2rem 1.5rem;transition:all .4s var(--ease);border-bottom:1px solid transparent}
+.nav.scrolled{padding:0.8rem 1.5rem;background:rgba(3,3,5,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom-color:var(--card-border);box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+.nav-inner{max-width:var(--max);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;position:relative}
+.brand{display:flex;align-items:center;gap:.8rem;transition:transform .3s;z-index:1001}
+.brand:hover{transform:scale(1.05)}
+.brand-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, rgba(var(--acc-rgb),0.15), rgba(var(--acc2-rgb),0.05));border:1px solid rgba(var(--acc-rgb),0.2);display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px rgba(var(--acc-rgb),0.2)}
+.brand-logo img{width:100%;height:100%;object-fit:cover}
+.brand-name{font-family:var(--fl);font-weight:900;font-size:1.1rem;letter-spacing:.15em;text-transform:uppercase}
+.brand-name span{color:var(--acc);text-shadow:0 0 15px rgba(var(--acc-rgb),0.6)}
+
+.nav-pills{display:flex;gap:.2rem;background:rgba(255,255,255,.02);padding:.3rem;border-radius:100px;border:1px solid var(--card-border)}
+.nav-pill{display:flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;border-radius:100px;font-family:var(--fu);font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);transition:all .3s}
+.nav-pill i{opacity:0.6;font-size:.75rem}
+.nav-pill:hover{color:#fff;background:rgba(255,255,255,.05)}
+.nav-pill.active{color:#fff;background:rgba(var(--acc-rgb),.15);border:1px solid rgba(var(--acc-rgb),.3);box-shadow:0 0 20px rgba(var(--acc-rgb),0.1)}
+.nav-pill.active i{color:var(--acc);opacity:1;text-shadow:0 0 10px var(--acc)}
+
+.nav-right{display:flex;align-items:center;gap:.8rem;z-index:1001}
+.mobile-toggle{display:none;font-size:1.4rem;color:#fff;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);width:40px;height:40px;border-radius:10px;align-items:center;justify-content:center;transition:all 0.3s;z-index:1001}
+.mobile-toggle:hover{background:rgba(var(--acc-rgb),0.1);color:var(--acc);border-color:var(--acc)}
+
+/* CURRENCY SELECTOR */
+.curr-selector{position:relative}
+.curr-trigger{display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem;border-radius:14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);font-family:var(--fu);font-size:.7rem;font-weight:700;color:#fff;transition:all .3s var(--ease);cursor:pointer;backdrop-filter:blur(10px)}
+.curr-trigger:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2);box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.curr-flag{width:20px;height:14px;border-radius:2px;object-fit:cover}
+.curr-chev{font-size:.55rem;color:var(--dim);transition:transform .3s, color .3s}
+.curr-selector.open .curr-chev{transform:rotate(180deg);color:var(--acc)}
+.curr-menu{position:absolute;top:calc(100% + 10px);right:0;width:240px;background:rgba(8,5,16,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:8px;box-shadow:0 25px 60px rgba(0,0,0,0.9);opacity:0;visibility:hidden;transform-origin:top right;transform:scale(0.95) translateY(-5px);transition:all .3s var(--ease);z-index:2000}
+.curr-selector.open .curr-menu{opacity:1;visibility:visible;transform:scale(1) translateY(0)}
+.curr-option{display:flex;align-items:center;gap:.8rem;width:100%;padding:.7rem .85rem;border-radius:10px;color:var(--dim);font-family:var(--fu);font-size:.7rem;font-weight:600;transition:all .2s;cursor:pointer;margin-bottom:2px}
+.curr-option:hover{background:rgba(255,255,255,.05);color:#fff;transform:translateX(5px)}
+.curr-option.active{background:rgba(var(--acc-rgb),.1);color:var(--acc);font-weight:700}
+.curr-option .curr-sym{margin-left:auto;font-family:var(--fd);color:inherit}
+
+.cart-pill{display:flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;border-radius:14px;background:var(--acc);color:#000;font-family:var(--fu);font-size:.7rem;font-weight:800;transition:all .3s;box-shadow:0 4px 15px rgba(var(--acc-rgb),.2)}
+.cart-pill:hover{transform:translateY(-2px);background:#fff;box-shadow:0 8px 25px rgba(255,255,255,.3)}
+.cart-count{background:#fff;color:#000;padding:2px 8px;border-radius:100px;font-size:.6rem;font-weight:900}
+.cart-pill:hover .cart-count{background:#000;color:#fff}
+
+/* ===== HERO ===== */
+.page-hero{position:relative;padding:12rem 1.5rem 4rem;max-width:var(--max);margin:0 auto;text-align:center;display:flex;flex-direction:column;align-items:center}
+.page-hero h1{font-family:var(--fl);font-weight:900;font-size:clamp(3rem, 8vw, 5rem);letter-spacing:-.02em;text-transform:uppercase;line-height:1.1;margin-bottom:1.5rem;animation:fadeUp 1s .1s ease both}
+
+.xd-container {display:inline-block; position:relative;}
+.page-hero h1 .accent {position:relative; color:transparent; background:linear-gradient(135deg, var(--acc), var(--acc2)); -webkit-background-clip:text; background-clip:text; display:inline-block;}
+.page-hero h1 .accent::before {
+  content: attr(data-text); position: absolute; top: 0; left: -2px; color: transparent;
+  background: linear-gradient(135deg, #fff, var(--acc2)); -webkit-background-clip: text; background-clip: text;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 75% 42%, 60% 55%, 45% 48%, 30% 62%, 15% 50%, 0 58%);
+  transform: translateY(-2px) rotate(-1deg); filter: drop-shadow(0 0 12px rgba(192,132,252,0.8)); z-index: 2;
+  animation: glitchFloat 3s ease-in-out infinite alternate;
+}
+.crack-line {
+  position:absolute; top:52%; left:-5%; width:110%; height:2px; background:var(--acc);
+  box-shadow:0 0 10px var(--acc), 0 0 20px #fff; transform:rotate(-2deg); z-index:3;
+  mix-blend-mode:screen; opacity:0.8; border-radius:50%; animation:crackSpark 2s linear infinite; pointer-events:none;
+}
+@keyframes glitchFloat {
+  0% { transform: translate(-2px, -2px) rotate(-1deg); filter: drop-shadow(0 0 15px rgba(192,132,252,1)); }
+  100% { transform: translate(1px, -3px) rotate(-1.5deg); filter: drop-shadow(0 0 5px rgba(192,132,252,0.4)); }
+}
+@keyframes crackSpark {
+  0%, 100% { opacity:0.6; height:1px; box-shadow:0 0 10px var(--acc), 0 0 20px #fff; }
+  50% { opacity:1; height:2px; box-shadow:0 0 15px var(--acc), 0 0 30px #fff, 0 0 45px var(--acc2); }
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+
+/* ===== CART PANEL ===== */
+.section{max-width:var(--max);margin:0 auto;padding:0 1.5rem 5rem;animation:fadeUp 1s .3s ease both}
+.cart-panel{background:rgba(255,255,255,0.015);border:1px solid rgba(var(--acc-rgb),0.2);border-radius:24px;padding:2.5rem;max-width:900px;margin:0 auto;backdrop-filter:blur(20px);box-shadow:0 25px 50px rgba(0,0,0,0.6)}
+
+.cart-item{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:1rem;transition:background 0.3s}
+.cart-item:first-child{padding-top:0}
+.cart-item:last-child{border-bottom:none;padding-bottom:0}
+
+.cart-left{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;flex:1}
+.cart-left i{font-size:1.5rem;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(var(--acc-rgb),0.1);color:var(--acc);border-radius:10px;border:1px solid rgba(var(--acc-rgb),0.3)}
+.cart-name{font-family:var(--fd);font-weight:700;font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;color:#fff}
+.cart-price{color:var(--acc);font-family:var(--fm);font-weight:700;font-size:1.1rem;margin-left:auto}
+
+.cart-qty{display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,0.03);padding:0.4rem 0.8rem;border-radius:10px;border:1px solid var(--card-border)}
+.cart-qty button{color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;transition:all .3s var(--ease);font-size:.9rem;display:flex;align-items:center;justify-content:center;background:transparent}
+.cart-qty button:hover{background:var(--acc);color:#000}
+.cart-qty span{min-width:24px;text-align:center;font-weight:700;font-size:1rem;font-family:var(--fm)}
+
+.cart-remove{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);color:var(--mute);cursor:pointer;font-size:1rem;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;transition:all .3s var(--ease);margin-left:1rem}
+.cart-remove:hover{background:rgba(248,113,113,0.1);color:#F87171;border-color:#F87171}
+
+.cart-empty{text-align:center;padding:5rem 1rem}
+.cart-empty i{font-size:4rem;color:var(--acc);opacity:.3;display:block;margin-bottom:1.5rem}
+.cart-empty h3{font-family:var(--fl);font-size:1.8rem;text-transform:uppercase;margin-bottom:1rem;color:#fff}
+.cart-empty p{color:var(--dim);margin-bottom:2rem;font-size:1rem}
+
+.cart-total{display:flex;justify-content:space-between;align-items:center;padding:2rem 0 0;border-top:1px solid rgba(var(--acc-rgb),0.3);margin-top:1.5rem;flex-wrap:wrap;gap:1.5rem}
+.cart-total-label{color:var(--dim);font-family:var(--fu);font-size:.8rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
+.cart-total-price{font-family:var(--fd);font-size:2.5rem;font-weight:700;letter-spacing:-.03em;color:var(--acc);text-shadow:0 0 15px rgba(var(--acc-rgb),0.4)}
+
+.checkout-btn{padding:1rem 2.5rem;border-radius:12px;background:var(--acc);color:#000;font-family:var(--fd);font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;transition:all .4s var(--ease);position:relative;overflow:hidden;cursor:pointer;border:none;box-shadow:0 0 20px rgba(var(--acc-rgb),0.3)}
+.checkout-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.3),transparent);transform:translateX(-100%);transition:transform .7s}
+.checkout-btn:hover::before{transform:translateX(100%)}
+.checkout-btn:hover{background:#fff;transform:translateY(-3px);box-shadow:0 10px 30px rgba(255,255,255,0.4)}
+
+.continue-link{display:inline-flex;align-items:center;gap:.6rem;color:var(--dim);font-family:var(--fu);font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:2rem;transition:all .3s var(--ease)}
+.continue-link:hover{color:var(--acc);gap:1rem}
+
+/* ===== CHECKOUT POPUP ===== */
+.checkout-popup-overlay{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.85);backdrop-filter:blur(16px);display:none;align-items:center;justify-content:center;padding:1.5rem}
+.checkout-popup-overlay.active{display:flex}
+.checkout-popup{background:#0a0a0c;border-radius:24px;max-width:520px;width:100%;border:1px solid rgba(var(--acc-rgb),0.3);box-shadow:0 40px 100px rgba(0,0,0,.9);animation:popIn .4s var(--ease);padding:2.5rem 2rem;text-align:center;position:relative}
+@keyframes popIn{from{transform:scale(.94) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.checkout-popup::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--acc),var(--acc2),transparent);border-radius:24px 24px 0 0}
+
+.checkout-popup .popup-icon{font-size:3rem;display:block;margin-bottom:1rem;color:var(--acc);text-shadow:0 0 15px rgba(var(--acc-rgb),0.4)}
+.checkout-popup h3{font-family:var(--fl);font-size:1.8rem;text-transform:uppercase;margin-bottom:.5rem;color:#fff}
+.checkout-popup p{color:var(--dim);font-size:.9rem;margin-bottom:1.5rem;line-height:1.6}
+
+.order-summary{background:rgba(255,255,255,.02);border-radius:16px;padding:1.5rem;margin-bottom:1.8rem;border:1px solid var(--card-border);text-align:left}
+.summary-item{display:flex;justify-content:space-between;align-items:center;color:var(--dim);font-size:.85rem;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.summary-item:last-child{border-bottom:none;font-weight:700;color:var(--acc);font-size:1.1rem;padding-top:1rem;margin-top:.5rem;border-top:1px solid rgba(255,255,255,.1)}
+.summary-item .label{font-family:var(--fb)}
+.summary-item .value{font-family:var(--fm)}
+
+.checkout-options{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.5rem}
+.checkout-option-btn{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:1rem 1.5rem;border:none;border-radius:12px;font-family:var(--fd);font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:all .3s var(--ease);flex:1;min-width:180px}
+.checkout-option-btn.discord-option{background:#5865F2;color:#fff}
+.checkout-option-btn.discord-option:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(88,101,242,.4)}
+.checkout-option-btn.whatsapp-option{background:#25D366;color:#fff}
+.checkout-option-btn.whatsapp-option:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(37,211,102,.4)}
+.checkout-option-btn i{font-size:1.2rem}
+
+.checkout-close-btn{background:rgba(255,255,255,.05);border:1px solid var(--card-border);color:var(--dim);padding:.8rem 2rem;border-radius:10px;font-family:var(--fd);font-size:.8rem;font-weight:700;text-transform:uppercase;cursor:pointer;transition:all .3s;letter-spacing:0.1em}
+.checkout-close-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* ===== FOOTER ===== */
+.footer{border-top:1px solid var(--card-border);background:var(--bg);margin-top:4rem}
+.footer-top{max-width:var(--max);margin:0 auto;padding:4rem 1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2rem}
+.footer-brand{display:flex;align-items:center;gap:1rem}
+.footer-logo{width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid var(--card-border);display:flex;align-items:center;justify-content:center}
+.footer-logo img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.footer-brand-text h3{font-family:var(--fl);font-size:1.2rem;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.2rem}
+.footer-brand-text p{font-family:var(--fb);font-size:0.8rem;color:var(--dim);max-width:400px;line-height:1.5}
+.footer-nav{display:flex;gap:2.5rem;align-items:center;flex-wrap:wrap}
+.footer-nav a{font-family:var(--fu);font-size:0.8rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.15em;transition:color 0.3s;cursor:pointer}
+.footer-nav a:hover{color:#fff}
+.footer-nav a i{font-size:0.7rem;margin-left:0.3rem;opacity:0.7}
+.footer-bottom{max-width:var(--max);margin:0 auto;padding:1.5rem;border-top:1px solid var(--card-border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.footer-copy{font-family:var(--fm);font-size:0.75rem;color:var(--mute)}
+.footer-copy span{color:var(--dim)}
+.footer-social{display:flex;gap:1rem}
+.footer-social a{color:var(--dim);font-size:1.1rem;transition:color 0.3s}
+.footer-social a:hover{color:var(--acc)}
+
+/* ===== POPUPS ===== */
+.policy-overlay{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.85);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;visibility:hidden;transition:all .3s ease}
+.policy-overlay.active{opacity:1;visibility:visible}
+.policy-modal{background:#0a0a0c;border:1px solid rgba(var(--acc-rgb),0.3);border-radius:24px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:2.8rem 2.6rem 2.4rem;box-shadow:0 40px 100px rgba(0,0,0,.9);transform:scale(.95) translateY(10px);transition:transform .4s cubic-bezier(0.16, 1, 0.3, 1);position:relative}
+.policy-overlay.active .policy-modal{transform:scale(1) translateY(0)}
+.policy-modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--acc),var(--acc2),transparent);border-radius:24px 24px 0 0}
+.policy-modal::-webkit-scrollbar{width:6px}
+.policy-modal::-webkit-scrollbar-thumb{background:rgba(var(--acc-rgb),0.3);border-radius:10px}
+
+.policy-close{position:absolute;top:1.4rem;right:1.6rem;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.04);border:1px solid var(--card-border);color:var(--dim);font-size:1.2rem;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s}
+.policy-close:hover{background:rgba(var(--acc-rgb),0.1);color:#fff;border-color:var(--acc);transform:rotate(90deg)}
+
+.policy-title{font-family:var(--fl);font-weight:900;font-size:1.6rem;text-transform:uppercase;color:#fff;margin-bottom:.5rem;text-align:center;letter-spacing:0.05em}
+.policy-subtitle{font-family:var(--fu);font-size:.65rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--acc);margin-bottom:2rem;text-align:center}
+.policy-section{margin-bottom:1.5rem}
+.policy-section h4{font-family:var(--fl);font-weight:700;font-size:.95rem;text-transform:uppercase;color:#fff;margin-bottom:.6rem;display:flex;align-items:center;gap:.6rem;letter-spacing:0.05em}
+.policy-section h4 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;background:rgba(255,255,255,0.05);color:var(--acc);font-size:.75rem;font-family:var(--fm);font-weight:800}
+.policy-section p{color:var(--dim);font-size:.88rem;line-height:1.7;padding-left:2.4rem}
+
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;align-items:center;gap:1rem;padding:1rem 1.4rem;border-radius:14px;background:rgba(10,10,12,.95);border:1px solid rgba(var(--acc-rgb),0.3);box-shadow:0 15px 30px rgba(0,0,0,.6);color:#fff;max-width:400px;transform:translateY(150px);opacity:0;transition:all .5s cubic-bezier(0.16, 1, 0.3, 1);pointer-events:none;backdrop-filter:blur(24px)}
+.toast.show{transform:translateY(0);opacity:1;pointer-events:auto}
+.toast > i:first-child{color:var(--acc);font-size:1.4rem;background:rgba(var(--acc-rgb),0.15);width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(var(--acc-rgb),0.3)}
+#toastMessage{font-family:var(--fd);font-weight:700;font-size:0.9rem;text-transform:uppercase;color:#fff}
+.toast-link{font-family:var(--fu);font-size:.7rem;font-weight:800;color:#000;background:var(--acc);margin-left:auto;padding:.5rem 1rem;border-radius:8px;transition:all .3s;text-transform:uppercase;box-shadow:0 4px 15px rgba(var(--acc-rgb),0.3);display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none}
+.toast-link:hover{background:#fff;transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,255,255,0.3)}
+.toast-close{background:none;border:none;color:var(--mute);cursor:pointer;font-size:1.2rem;padding:0;margin-left:0.2rem;transition:color 0.3s}
+.toast-close:hover{color:#fff}
+
+@media(max-width:980px){
+  .mobile-toggle{display:flex}
+  .nav-pills{
+    position:absolute;top:100%;left:1rem;right:1rem;
+    background:rgba(10,10,12,.98);backdrop-filter:blur(24px);
+    flex-direction:column;padding:1rem;border-radius:16px;
+    border:1px solid var(--card-border);
+    opacity:0;visibility:hidden;transform:translateY(-10px);
+    pointer-events:none;align-items:flex-start;
+  }
+  .nav-pills.active{opacity:1;visibility:visible;transform:translateY(10px);pointer-events:auto;z-index:1000}
+  .nav-pill{width:100%;padding:1rem;font-size:0.75rem}
+  .footer-top{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:640px){
+  .nav{padding:1rem}
+  .nav.scrolled{padding:0.8rem 1rem}
+  .page-hero{padding:8rem 1.2rem 2rem}
+  .page-hero h1{font-size:2.8rem}
+  .section{padding:0 1.2rem 4rem}
+  .curr-menu{right:auto;left:50%;transform:translateX(-50%) translateY(-10px);text-align:center;width:200px}
+  .curr-selector.open .curr-menu{transform:translateX(-50%) translateY(0)}
+  .curr-option{justify-content:center}
+  .cart-panel{padding:1.5rem}
+  .cart-item{flex-direction:column;align-items:flex-start;gap:1.5rem}
+  .cart-left{width:100%}
+  .cart-price{margin-left:0}
+  .cart-qty{width:100%;justify-content:center}
+  .cart-remove{position:absolute;right:1.5rem;margin-left:0}
+  .cart-total{flex-direction:column;align-items:center;text-align:center}
+  .checkout-btn{width:100%}
+  .checkout-popup{padding:2rem 1.5rem}
+  .checkout-options{flex-direction:column}
+  .toast{left:1rem;right:1rem;max-width:none}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor-dot" id="curDot"></div>
+<div class="cursor-ring" id="curRing"></div>
+<div id="scrollProgress"></div>
+
+<div id="loader">
+  <div class="loader-brand"><img src="ASSETS/LOGO.png" alt="Qubit XD" onerror="this.style.display='none'"></div>
+  <div class="loader-title">Your Cart</div>
+  <div class="loader-bar"></div>
+</div>
+
+<div class="bg-layer"><div class="bg-gradient"></div><div class="bg-grid"></div></div>
+<canvas id="particleCanvas"></canvas>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-logo"><img src="ASSETS/LOGO.png" alt="" onerror="this.style.display='none'"></span>
+      <span class="brand-name">Qubit <span>XD</span></span>
+    </a>
+    
+    <div class="nav-pills" id="navPills">
+      <a href="index.html" class="nav-pill"><i class="fas fa-terminal"></i>Home</a>
+      <a href="Optimization.html" class="nav-pill"><i class="fas fa-bolt"></i>Optimisation</a>
+      <a href="sensi-pro.html" class="nav-pill"><i class="fas fa-crosshairs"></i>Sensi Pro</a>
+      <a href="Aimx ultimate.html" class="nav-pill"><i class="fas fa-fire"></i>Aim X Ultimate</a>
+      <a href="emulators.html" class="nav-pill"><i class="fas fa-gamepad"></i>Emulators</a>
+      <a href="free-tools.html" class="nav-pill"><i class="fas fa-box-open"></i>Free Tools</a>
+    </div>
+    
+    <div class="nav-right">
+      <div class="curr-selector" id="currSelector">
+        <button class="curr-trigger" onclick="toggleCurr(event)" type="button">
+          <img src="https://flagcdn.com/w40/us.png" alt="USD" class="curr-flag" id="currFlag">
+          <span class="curr-label" id="currLabel">USD</span>
+          <i class="fas fa-chevron-down curr-chev"></i>
+        </button>
+        <div class="curr-menu">
+          <button class="curr-option active" data-cur="USD" data-flag="us" onclick="selectCurrency('USD',event)"><img src="https://flagcdn.com/w40/us.png" class="curr-flag"><span class="curr-name">US Dollar</span><span class="curr-sym">$</span></button>
+          <button class="curr-option" data-cur="INR" data-flag="in" onclick="selectCurrency('INR',event)"><img src="https://flagcdn.com/w40/in.png" class="curr-flag"><span class="curr-name">Indian Rupee</span><span class="curr-sym">₹</span></button>
+          <button class="curr-option" data-cur="PKR" data-flag="pk" onclick="selectCurrency('PKR',event)"><img src="https://flagcdn.com/w40/pk.png" class="curr-flag"><span class="curr-name">Pakistani Rupee</span><span class="curr-sym">₨</span></button>
+          <button class="curr-option" data-cur="BDT" data-flag="bd" onclick="selectCurrency('BDT',event)"><img src="https://flagcdn.com/w40/bd.png" class="curr-flag"><span class="curr-name">Bangladeshi Taka</span><span class="curr-sym">৳</span></button>
+          <button class="curr-option" data-cur="GBP" data-flag="gb" onclick="selectCurrency('GBP',event)"><img src="https://flagcdn.com/w40/gb.png" class="curr-flag"><span class="curr-name">British Pound</span><span class="curr-sym">£</span></button>
+          <button class="curr-option" data-cur="SAR" data-flag="sa" onclick="selectCurrency('SAR',event)"><img src="https://flagcdn.com/w40/sa.png" class="curr-flag"><span class="curr-name">Saudi Riyal</span><span class="curr-sym">ر.س</span></button>
+        </div>
+      </div>
+      <a href="cart.html" class="cart-pill"><i class="fas fa-shopping-cart"></i><span class="cart-count" id="cartCount">0</span></a>
+      <button class="mobile-toggle" onclick="toggleMobileMenu(event)" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <h1>Your 
+    <div class="xd-container">
+      <span class="accent" data-text="Cart">Cart</span>
+      <div class="crack-line"></div>
+    </div>
+  </h1>
+</div>
+
+<div class="section">
+  <div class="cart-panel" id="cartContainer"></div>
+</div>
+
+<footer class="footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo"><img src="ASSETS/LOGO.png" alt="" onerror="this.style.display='none'"></div>
+      <div class="footer-brand-text">
+        <h3>Qubit XD Services</h3>
+        <p>Precision-engineered esports utilities. Delivering absolute raw input, stripped Windows environments, and maximum frame stability for top-tier competitive play.</p>
+      </div>
+    </div>
+    <div class="footer-nav">
+      <a href="https://discord.gg/EephZGFnxs" target="_blank">Contact <i class="fas fa-arrow-up-right-from-square"></i></a>
+      <a onclick="openPolicy('terms', event)">Terms</a>
+      <a onclick="openPolicy('privacy', event)">Privacy</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Qubit XD. <span>All performance profiles verified secure.</span></div>
+    <div class="footer-social">
+      <a href="https://www.youtube.com/@QubitXD" target="_blank"><i class="fab fa-youtube"></i></a>
+      <a href="https://discord.gg/EephZGFnxs" target="_blank"><i class="fab fa-discord"></i></a>
+    </div>
+  </div>
+</footer>
+
+<div class="policy-overlay" id="policyOverlay" onclick="if(event.target===this)closePolicy()">
+  <div class="policy-modal">
+    <button class="policy-close" onclick="closePolicy()">&times;</button>
+    <h3 class="policy-title" id="policyTitle">Terms</h3>
+    <div class="policy-subtitle" id="policySubtitle">Qubit XD • Legal</div>
+    <div id="policyBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <i class="fas fa-check"></i>
+  <div><div id="toastMessage">Updated</div></div>
+  <button class="toast-close" onclick="closeToast()">&times;</button>
+</div>
+
+<div class="checkout-popup-overlay" id="checkoutPopup">
+  <div class="checkout-popup">
+    <i class="fas fa-shopping-cart popup-icon"></i>
+    <h3>Secure Checkout</h3>
+    <p>Finish your purchase securely via Discord or WhatsApp. Real human on the other end — usually replies in under 5 minutes.</p>
+    <div class="order-summary" id="orderSummary"></div>
+    <div class="checkout-options">
+      <button class="checkout-option-btn discord-option" onclick="checkoutDiscord()"><i class="fab fa-discord"></i> Discord</button>
+      <button class="checkout-option-btn whatsapp-option" onclick="checkoutWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+    </div>
+    <button class="checkout-close-btn" onclick="closeCheckoutPopup()">Cancel / Go Back</button>
+  </div>
+</div>
+
+<script>
+function toggleMobileMenu(e) {
+  e.stopPropagation();
+  const pills = document.getElementById('navPills');
+  const btn = document.getElementById('mobileMenuBtn');
+  pills.classList.toggle('active');
+  if(pills.classList.contains('active')) {
+    btn.innerHTML = '<i class="fas fa-times"></i>';
+    document.getElementById('currSelector').classList.remove('open');
+  } else {
+    btn.innerHTML = '<i class="fas fa-bars"></i>';
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const sel = document.getElementById('currSelector');
+  if(sel) sel.classList.remove('open');
+  
+  const pills = document.getElementById('navPills');
+  const btn = document.getElementById('mobileMenuBtn');
+  if(pills && pills.classList.contains('active') && !e.target.closest('#navPills') && !e.target.closest('#mobileMenuBtn')) {
+    pills.classList.remove('active');
+    btn.innerHTML = '<i class="fas fa-bars"></i>';
+  }
+});
+
+const currencyRates={USD:{symbol:'$',rate:1,flag:'us'},INR:{symbol:'₹',rate:95.43,flag:'in'},PKR:{symbol:'₨',rate:277.55,flag:'pk'},BDT:{symbol:'৳',rate:123.30,flag:'bd'},GBP:{symbol:'£',rate:0.79,flag:'gb'},SAR:{symbol:'ر.س',rate:3.75,flag:'sa'}};
+let currentCurrency='USD';let cart=JSON.parse(localStorage.getItem('qubitCart'))||[];
+
+const productNames={1:'Aim X Ultimate (Lifetime)',2:'Aim X Ultimate (4 Month)',3:'Complete Pack',4:'Premium Pack',5:'Pro Pack',8:'ShrineX',10:'Hackers Sensi'};
+const productIcons={1:'fa-fire',2:'fa-clock',3:'fa-crown',4:'fa-gem',5:'fa-rocket',8:'fa-gamepad',10:'fa-crosshairs'};
+
+function getPriceInCurrency(usd){
+  const r=currencyRates[currentCurrency];
+  return r.symbol+(usd*r.rate).toFixed(2)
+}
+
+function toggleCurr(e){
+  e.stopPropagation();
+  document.getElementById('currSelector').classList.toggle('open');
+  const pills = document.getElementById('navPills');
+  if(pills && pills.classList.contains('active')) {
+    pills.classList.remove('active');
+    document.getElementById('mobileMenuBtn').innerHTML = '<i class="fas fa-bars"></i>';
+  }
+}
+function selectCurrency(code,e){
+  if(e)e.stopPropagation();
+  if(!currencyRates[code])return;
+  currentCurrency=code;
+  localStorage.setItem('qubitCurrency',code);
+  const r=currencyRates[code];
+  document.getElementById('currFlag').src='https://flagcdn.com/w40/'+r.flag+'.png';
+  document.getElementById('currLabel').textContent=code;
+  document.querySelectorAll('.curr-option').forEach(o=>o.classList.toggle('active',o.dataset.cur===code));
+  document.getElementById('currSelector').classList.remove('open');
+  renderCart()
+}
+function loadCurrency(){
+  const s=localStorage.getItem('qubitCurrency');
+  if(s&&currencyRates[s]){selectCurrency(s)}
+}
+function updateCartCount(){document.getElementById('cartCount').textContent=cart.reduce((s,i)=>s+(i.quantity||0),0)}
+function saveCart(){localStorage.setItem('qubitCart',JSON.stringify(cart));updateCartCount();renderCart()}
+
+function showToast(m){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMessage').textContent=m;
+  t.classList.add('show');
+  clearTimeout(t._timeout);
+  t._timeout=setTimeout(()=>t.classList.remove('show'),3000)
+}
+function closeToast(){document.getElementById('toast').classList.remove('show')}
+
+function renderCart(){
+  const c=document.getElementById('cartContainer');
+  if(!cart||cart.length===0){
+    c.innerHTML=`<div class="cart-empty"><i class="fas fa-shopping-cart"></i><h3>Your cart is empty</h3><p>Browse our premium tools and packages to equip your arsenal.</p><a href="Optimization.html" class="continue-link"><i class="fas fa-arrow-left"></i> Explore Arsenal</a></div>`;
+    return;
+  }
+  let html='';let total=0;
+  cart.forEach((item,index)=>{
+    const qty=typeof item.quantity==='number'&&item.quantity>0?item.quantity:1;
+    const sub=item.price*qty;total+=sub;
+    const name=productNames[item.id]||item.name||'Product';
+    const icon=productIcons[item.id]||'fa-cube';
+    html+=`<div class="cart-item">
+            <div class="cart-left">
+              <i class="fas ${icon}"></i>
+              <span class="cart-name">${name}</span>
+              <span class="cart-price">${getPriceInCurrency(item.price)}</span>
+            </div>
+            <div class="cart-qty">
+              <button onclick="updateQty(${index},-1)"><i class="fas fa-minus"></i></button>
+              <span>${qty}</span>
+              <button onclick="updateQty(${index},1)"><i class="fas fa-plus"></i></button>
+              <button class="cart-remove" title="Remove" onclick="removeItem(${index})"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>`;
+  });
+  html+=`<div class="cart-total">
+          <div>
+            <span class="cart-total-label">Total Investment</span>
+            <div class="cart-total-price">${getPriceInCurrency(total)} <span style="font-size:1rem;color:var(--mute)">${currentCurrency}</span></div>
+          </div>
+          <button class="checkout-btn" onclick="openCheckoutPopup()">Secure Checkout <i class="fas fa-lock" style="margin-left:8px"></i></button>
+         </div>
+         <a href="Optimization.html" class="continue-link"><i class="fas fa-arrow-left"></i> Add more modules</a>`;
+  c.innerHTML=html;
+}
+
+function updateQty(index,delta){
+  if(index<0||index>=cart.length)return;
+  const n=(cart[index].quantity||1)+delta;
+  if(n<=0)cart.splice(index,1);
+  else cart[index].quantity=n;
+  saveCart();
+  showToast('Cart updated')
+}
+function removeItem(index){
+  if(index<0||index>=cart.length)return;
+  cart.splice(index,1);
+  saveCart();
+  showToast('Item removed')
+}
+
+function openCheckoutPopup(){
+  if(!cart||cart.length===0){showToast('Your cart is empty!');return}
+  let total=0;let itemsHtml='';
+  cart.forEach(item=>{
+    const qty=item.quantity||1;
+    const sub=item.price*qty;
+    total+=sub;
+    const name=productNames[item.id]||item.name||'Product';
+    itemsHtml+=`<div class="summary-item"><span class="label">${name} <b>×${qty}</b></span><span class="value">${getPriceInCurrency(sub)}</span></div>`
+  });
+  document.getElementById('orderSummary').innerHTML=itemsHtml+`<div class="summary-item"><span class="label">Total Amount</span><span class="value">${getPriceInCurrency(total)} ${currentCurrency}</span></div>`;
+  document.getElementById('checkoutPopup').classList.add('active');
+  document.body.classList.add('popup-open');
+}
+function closeCheckoutPopup(){
+  document.getElementById('checkoutPopup').classList.remove('active');
+  document.body.classList.remove('popup-open');
+}
+
+function checkoutDiscord(){
+  window.open('https://discord.gg/EephZGFnxs','_blank');
+  closeCheckoutPopup();
+  showToast('Join our Discord to complete your purchase!')
+}
+function checkoutWhatsApp(){
+  let itemsStr='';
+  cart.forEach(item=>{
+    const qty=item.quantity||1;
+    const name=productNames[item.id]||item.name||'Product';
+    itemsStr+=`- ${name} x${qty}%0A`
+  });
+  const total=cart.reduce((s,i)=>s+(i.price*(i.quantity||1)),0);
+  
+  const msg=`*Qubit XD Store - Order Request*%0A━━━━━━━━━━━━━━━━━━━━%0A*Customer Order Details:*%0A${itemsStr}%0A*Order Total:* ${getPriceInCurrency(total)} ${currentCurrency}%0A━━━━━━━━━━━━━━━━━━━━%0AHello Qubit XD Team,%0AI would like to proceed with the purchase of the items listed above. Please provide the available payment methods so we can finalize the transaction.%0AThank you!`;
+  
+  window.open(`https://wa.me/923157096241?text=${msg}`,'_blank');
+  closeCheckoutPopup();
+  showToast('Redirecting to WhatsApp...');
+}
+
+document.getElementById('checkoutPopup').addEventListener('click',function(e){if(e.target===this)closeCheckoutPopup()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCheckoutPopup();closePolicy()}});
+
+const policies={
+  terms:{title:'Terms of Service',subtitle:'Qubit XD • Legal Agreement',sections:[{n:'01',h:'Usage License',p:'Every configuration and sensitivity guide on Qubit XD is licensed for personal, single-device use only. Redistribution, resale, or public reupload of any package is strictly prohibited.'},{n:'02',h:'Final Transaction Policy',p:'Since all products are delivered instantly as digital files, every purchase is considered final at checkout. If you encounter installation issues, our support team will personally walk you through the setup.'}]},
+  privacy:{title:'Privacy Policy',subtitle:'Qubit XD • Data Protection',sections:[{n:'01',h:'Client-Side Data Handling',p:'Qubit XD runs entirely in your browser. We do not collect, store, or transmit any personal information to external servers. Your cart items are saved locally.'},{n:'02',h:'Third-Party Redirections',p:'Checkout actions route you to our official WhatsApp or Discord handles protected by their respective end-to-end encryption standards.'}]}
+};
+function openPolicy(key, e){
+  if(e)e.preventDefault();
+  const data=policies[key];if(!data)return;
+  document.getElementById('policyTitle').textContent=data.title;
+  document.getElementById('policySubtitle').textContent=data.subtitle;
+  document.getElementById('policyBody').innerHTML=data.sections.map(s=>`<div class="policy-section"><h4><span class="num">${s.n}</span>${s.h}</h4><p>${s.p}</p></div>`).join('');
+  document.getElementById('policyOverlay').classList.add('active');
+  document.body.classList.add('popup-open');
+}
+function closePolicy(){
+  document.getElementById('policyOverlay').classList.remove('active');
+  document.body.classList.remove('popup-open');
+}
+
+(function(){const l=document.getElementById('loader');if(sessionStorage.getItem('qubitBooted')){l.classList.add('hidden')}else{sessionStorage.setItem('qubitBooted','1');const hide=()=>setTimeout(()=>l.classList.add('hidden'),1000);window.addEventListener('load',hide);if(document.readyState==='complete')hide()}})();
+
+let mx=window.innerWidth/2, my=window.innerHeight/2;
+if (window.matchMedia("(hover: hover)").matches) {
+  const dot=document.getElementById('curDot'),ring=document.getElementById('curRing');
+  let rx=mx,ry=my;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px'});
+  (function anim(){rx+=(mx-rx)*.2;ry+=(my-ry)*.2;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim)})();
+  document.addEventListener('mouseover',e=>{if(e.target.closest('a,button,.curr-trigger,.curr-option,input'))ring.classList.add('hovered')});
+  document.addEventListener('mouseout',e=>{if(e.target.closest('a,button,.curr-trigger,.curr-option,input'))ring.classList.remove('hovered')});
+}
+document.addEventListener('touchstart', e => { mx=e.touches[0].clientX; my=e.touches[0].clientY; }, {passive: true});
+document.addEventListener('touchmove', e => { mx=e.touches[0].clientX; my=e.touches[0].clientY; }, {passive: true});
+
+const nav=document.getElementById('nav'),sp=document.getElementById('scrollProgress');
+window.addEventListener('scroll',()=>{nav.classList.toggle('scrolled',window.scrollY>40);const h=document.documentElement.scrollHeight-window.innerHeight;sp.style.width=(window.scrollY/h*100)+'%'},{passive:true});
+
+(function(){
+  const cv = document.getElementById('particleCanvas');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  let w, h;
+  const parts = [];
+  const N = window.innerWidth < 640 ? 40 : 70;
+
+  function resize(){ w = cv.width = window.innerWidth; h = cv.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+
+  class P {
+    constructor() {
+      this.x = Math.random()*w; this.y = Math.random()*h;
+      this.vx = (Math.random()-.5)*0.5; this.vy = (Math.random()-.5)*0.5;
+      this.r = Math.random()*1.5 + 0.5;
+    }
+    update() {
+      this.x += this.vx; this.y += this.vy;
+      const dx = this.x - mx, dy = this.y - my, d = Math.hypot(dx, dy);
+      if(d < 150) {
+        this.x += dx/d * 2; this.y += dy/d * 2;
+      }
+      if(this.x < 0 || this.x > w) this.vx *= -1;
+      if(this.y < 0 || this.y > h) this.vy *= -1;
+    }
+    draw() {
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+      ctx.fillStyle = '#C084FC';
+      ctx.shadowBlur = 15; ctx.shadowColor = '#C084FC';
+      ctx.fill(); ctx.shadowBlur = 0;
+    }
+  }
+  for(let i=0; i<N; i++) parts.push(new P());
+
+  function loop() {
+    ctx.clearRect(0,0,w,h);
+    parts.forEach(p => { p.update(); p.draw(); });
+    
+    for(let i=0; i<parts.length; i++) {
+      for(let j=i+1; j<parts.length; j++) {
+        const dx = parts[i].x - parts[j].x, dy = parts[i].y - parts[j].y, d = Math.hypot(dx, dy);
+        if(d < 120) {
+          ctx.beginPath(); ctx.moveTo(parts[i].x, parts[i].y); ctx.lineTo(parts[j].x, parts[j].y);
+          ctx.strokeStyle = `rgba(192, 132, 252, ${0.15 * (1 - d/120)})`;
+          ctx.lineWidth = 1; ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+loadCurrency();renderCart();updateCartCount();
+</script>
+</body>
+</html>
